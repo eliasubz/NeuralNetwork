@@ -4,7 +4,8 @@ import javax.sound.sampled.SourceDataLine;
 
 public class Perceptron {
     private static double error = 0;
-    private static double m = 0.3; // Learning Constant
+    private static double m = 0.1; // Learning Constant
+    private static double range = 1; // Range
     private static double d = 0; // deltaWeight
     private static double sumError = 1; // sum_error
     private static double someValue = 0.05; // some_value
@@ -17,6 +18,7 @@ public class Perceptron {
             { 1, 2, 1 }, { 2, 3, 1 }, { 3, 4, 1 }, { 0, -1, 1 }, { 1, 0, 1 }, { 2, 1, 1 }, { 3, 2, 1 },
             { 0, -2, 1 }, { 1, -1, 1 }, { 2, 0, 1 }, { 3, 1, 1 } , { 3, 122, 1 } , { 3, 6.5, 1 } , { -12, -46.5, 1 },{-50,-101,1},{100,202,1}};
     private static int[] targetOutputsLinear = { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ,1,0,0,0,1};
+
     private static double[][] testDataLinear = { { 0, 0, 1 }, { 1, 1, 1 }, { 2, 2, 1 }, { 3, 3, 1 },
             { 0, 1, 1 }, { 1, 2, 1 }, { 2, 4.8, 1 }, { 3, 6.8, 1 },
             { 0, -1, 1 }, { 1, 0, 1 }, { 2, 1, 1 }, { 3, 2, 1 },
@@ -24,62 +26,78 @@ public class Perceptron {
             { 0, 2, 1 }, { 1, 4, 1 }, { 2, 6, 1 }, { 3, 8, 1 },
             { 0, 7.2, 1 }, { 1, 3.1, 1 }, { 2, 5.5, 1 }, { 3, 12, 1 } };
     private static int[] testOutputsLinear = { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1 };
+
     private static double[][] trainDataLinearMin = { { 0, 0.9, 1 }, { 5, 10.9, 1 }, { 0, 1.1, 1 }, { 5, 11.1, 1 } };
     private static int[] targetOutputsLinearMin = { 0, 0, 1, 1 };
     
 
     public static void main(String[] args) {
+        System.out.println("this is the average: " + avarage(20));
 
-        // Data
-        double[][] trainData = trainDataLinearMin;
-        int[] targetOutputs = targetOutputsLinearMin;
-        int range = 20;
+    }
+    public static double avarage(int k){
+        String str = "";
+        double result = 0;
+        for (int i = 0;i < k; i++){
+            int b =  NN();
+            str += b + ", ";
+            result += b;
+        }
+        System.out.println(str);
+        return result/k;
+    }
+    public static int NN (){
+        double[][] trainData = trainDataAND;
+        int[] targetOutputs = targetOutputsAND;
+
 
         int activation = 0; // activation
 
-        double[] w = initializeWeights(3, range); // Initialize weights at random
+        double[] weights = initializeWeights(3, range); // Initialize weights at random
         boolean optimumFound = false;
 
         int counter = 0;
 
-        for (int iteration = 0; iteration < trainData.length && !optimumFound; iteration++) {
+        for (int iterator = 0;!optimumFound; iterator++) {
 
             while (sumError > someValue && sumError <= previousValue) { // while sum_error is still getting much smaller
 
                 sumError = 0;
 
-                activation = calculateActivation(trainData, w, iteration);
-                error = targetOutputs[iteration] - activation;
-                
-                System.out.println("iteration: " + iteration);
+                activation = calculateActivation(trainData, weights, iterator);
+                error = targetOutputs[iterator] - activation;
+                // System.out.println("this will indicate the direction "+error);
+//                System.out.println("iteration: " + iteration);
                 sumError += Math.abs(error);
-                System.out.println("this is sumerror: " + sumError);
-                
-                for (int i = 0; i < w.length; i++) {
-                    d = m * error * trainData[iteration][i];
-                    w[i] += d;
-                    // System.out.println("d: " + d);
-                }
-                System.out.println(Arrays.toString(w));
+//                System.out.println("this is sumerror: " + sumError);
 
-                if (counter % 2 == 0) {
-                    previousValue = sumError;
+                if (sumError != 0) {
+                    for (int i = 0; i < weights.length; i++) {
+                        d = m * error * trainData[iterator][i];
+                        weights[i] += d;
+                        // System.out.println("d: " + d);
+                    }
+                    System.out.println("Adjusted weights " + Arrays.toString(weights));
+
+                    if (counter % 2 == 0) {
+                        previousValue = sumError;
+                    }
+                    counter++;
                 }
-                counter++;
             }
-            if (trainData.length - 1 == iteration) {
-                sumError = totalError(trainData, w, targetOutputs);
+            if (trainData.length - 1 == iterator) {
+                sumError = totalError(trainData, weights, targetOutputs);
                 if (sumError == 0) {
                     optimumFound = true;
                     System.out.println("Total Optimum was found!!!");
-                    System.out.println("it took " + counter + " iterations");
+                    System.out.println("It took " + counter + " adjustments");
                     System.out.println(
-                            "the Wegiths are " + w[0] + " and " + w[1] + "and the weight of the Bias unit is " + w[2]);
+                            "The weights are " + weights[0] + " and " + weights[1] + " and the weight of the bias unit is " + weights[2]);
 
                 } else {
-                    System.out.println("Optimum wasnt found yet and iteration was reset");
-                    System.out.println("calculated total error is " + sumError);
-                    iteration = -1;
+                    System.out.println("Optimum wasn't found yet and iterator was reset");
+                    System.out.println("The calculated total error was " + sumError);
+                    iterator = -1;
                 }
 
             }
@@ -87,8 +105,11 @@ public class Perceptron {
             previousValue = 2;
         }
 
-        System.out.print("this is the totalerror with the testData: ");
-        System.out.println(totalError(trainDataLinear, w, targetOutputsLinear));
+        // System.out.print("this is the totalerror with the testData: ");
+        // System.out.println(totalError(trainDataLinear, w, targetOutputsLinear));
+
+        //System.out.println("Counter: " + counter);
+        return counter;
     }
 
     public static int calculateActivation(double[][] inputs, double[] weights, int iteration) {
@@ -97,9 +118,8 @@ public class Perceptron {
 
         for (int i = 0; i < inputs[iteration].length; i++) {
             netInput += inputs[iteration][i] * weights[i];
-
         }
-        System.out.println("this is netInput: " + netInput);
+//        System.out.println("this is netInput: " + netInput);
         if (netInput <= 0) { // Activation stepfunction at t = 0;
             a = 0;
         } else {
@@ -108,7 +128,7 @@ public class Perceptron {
         return a;
     }
 
-    public static double[] initializeWeights(int amount, int range) {
+    public static double[] initializeWeights(int amount, double range) {
         double[] w = new double[amount]; // Weights
         double weight;
         for (int i = 0; i < amount; i++) {
@@ -128,7 +148,6 @@ public class Perceptron {
         }
 
         return totalSumError;
-
     }
 
 }
