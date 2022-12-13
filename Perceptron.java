@@ -1,4 +1,6 @@
+import java.io.*;
 import java.util.Arrays;
+import java.util.Scanner;
 
 public class Perceptron {
     private static double error = 0;
@@ -34,18 +36,18 @@ public class Perceptron {
     private static int[] targetOutputsLinearMin = { 0, 1, 0 };
 
     public static void main(String[] args) {
-        System.out.println("this is the average: " + avarage(1000, trainDataLinear, targetOutputsLinear)); // average of
+        System.out.println("this is the average: " + average(1, trainDataLinearMin, targetOutputsLinearMin)); // average of
         // big
         // trainDatalinear
         System.out.print(
-                "this is the totalerror with the testData: " + totalError(testDataLinear, weights, testOutputsLinear)); // checks
+                "this is the total error with the testData: " + totalError(testDataLinear, weights, testOutputsLinear)); // checks
         // the
         // calculated
         // weights
     }
 
     // returns the average of k runs and takes in trainData and targetOutput arrays
-    public static double avarage(int k, double[][] trainData, int[] targetOutputs) {
+    public static double average(int k, double[][] trainData, int[] targetOutputs) {
         String str = "";
         double result = 0;
         for (int i = 0; i < k; i++) {
@@ -67,50 +69,60 @@ public class Perceptron {
 
         int counter = 0;
 
-        for (int iterator = 0; !optimumFound; iterator++) { // increments iterator until optimumfound
+        File file = new File("diagram.txt");
+        try  {
+            FileWriter fileWriter = new FileWriter(file);
+            PrintWriter printWriter = new PrintWriter(fileWriter);
 
-            while (sumError > someValue && sumError <= previousValue) { // while sum_error is still getting much smaller
+            for (int iterator = 0; !optimumFound; iterator++) { // increments iterator until optimumfound
 
-                sumError = 0;
-                activation = calculateActivation(trainData, weights, iterator);
-                error = targetOutputs[iterator] - activation;
-                sumError += Math.abs(error);
-                // if the error is not 0 the weights get changed with the delta that gets
-                if (sumError != 0) { // calculated by the Hebbian learning rule and the previous value gets decreaes
-                    // such that the algorithm doesnt iterate for ever
-                    for (int i = 0; i < weights.length; i++) {
-                        delta = m * error * trainData[iterator][i];
-                        weights[i] += delta;
+                while (sumError > someValue && sumError <= previousValue) { // while sum_error is still getting much smaller
+
+                    sumError = 0;
+                    activation = calculateActivation(trainData, weights, iterator);
+                    error = targetOutputs[iterator] - activation;
+                    sumError += Math.abs(error);
+                    // if the error is not 0 the weights get changed with the delta that gets
+                    if (sumError != 0) { // calculated by the Hebbian learning rule and the previous value gets decreaes
+                        // such that the algorithm doesnt iterate for ever
+                        printWriter.println(totalError(trainData, weights, targetOutputs));
+                        for (int i = 0; i < weights.length; i++) {
+                            delta = m * error * trainData[iterator][i];
+                            weights[i] += delta;
+                        }
+                        System.out.println("Adjusted weights " + Arrays.toString(weights));
+
+                        if (counter % 2 == 0) {
+                            previousValue = sumError;
+                        }
+                        counter++;
                     }
-                    System.out.println("Adjusted weights " + Arrays.toString(weights));
+                }
+                if (trainData.length - 1 == iterator) {
+                    sumError = totalError(trainData, weights, targetOutputs);
+                    if (sumError == 0) {
+                        optimumFound = true;
+                        System.out.println("Total Optimum was found!!!");
+                        System.out.println("It took " + counter + " adjustments");
+                        System.out.println(
+                                "The weights are " + weights[0] + " and " + weights[1]
+                                        + " and the weight of the bias unit is " + weights[2]);
 
-                    if (counter % 2 == 0) {
-                        previousValue = sumError;
+                    } else {
+                        System.out.println("Optimum wasn't found yet and iterator was reset");
+                        System.out.println("The calculated total error was " + sumError);
+                        iterator = -1;
                     }
-                    counter++;
-                }
-            }
-            if (trainData.length - 1 == iterator) {
-                sumError = totalError(trainData, weights, targetOutputs);
-                if (sumError == 0) {
-                    optimumFound = true;
-                    System.out.println("Total Optimum was found!!!");
-                    System.out.println("It took " + counter + " adjustments");
-                    System.out.println(
-                            "The weights are " + weights[0] + " and " + weights[1]
-                                    + " and the weight of the bias unit is " + weights[2]);
 
-                } else {
-                    System.out.println("Optimum wasn't found yet and iterator was reset");
-                    System.out.println("The calculated total error was " + sumError);
-                    iterator = -1;
                 }
-
+                sumError = 1;
+                previousValue = 2;
             }
-            sumError = 1;
-            previousValue = 2;
+            return counter;
+        }catch(IOException e) {
+            e.printStackTrace();
+            return -1;
         }
-        return counter;
     }
 
     // calculates(0,1) the activation of the inputs and the weights at the current
@@ -122,7 +134,7 @@ public class Perceptron {
         for (int i = 0; i < inputs[iteration].length; i++) {
             netInput += inputs[iteration][i] * weights[i];
         }
-        if (netInput <= 0) { // Activation stepfunction at t = 0;
+        if (netInput <= 0) { // Activation step-function at t = 0;
             a = 0;
         } else {
             a = 1;
